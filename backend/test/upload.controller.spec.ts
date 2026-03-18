@@ -202,4 +202,110 @@ describe('UploadController (e2e)', () => {
     expect(content).toContain('7701234567');
     expect(content).toContain('150000.00');
   });
+
+  it('E2E template substitution: all placeholders replaced with Excel data', async () => {
+    const buffer = createTestExcelBuffer();
+
+    // Upload → get rows → generate Word
+    const uploadRes = await request(app.getHttpServer())
+      .post('/api/upload')
+      .attach('file', buffer, 'template-check.xlsx')
+      .expect(201);
+
+    const rowsRes = await request(app.getHttpServer())
+      .get(`/api/files/${uploadRes.body.id}/rows`)
+      .expect(200);
+
+    const wordRes = await request(app.getHttpServer())
+      .get(`/api/rows/${rowsRes.body[0].id}/word`)
+      .responseType('blob')
+      .expect(200);
+
+    const docxBuffer = Buffer.from(wordRes.body);
+    const content = extractDocxText(docxBuffer);
+
+    // Verify every expected value from Excel is present in the generated Word
+    const expectedValues: Record<string, string> = {
+      document_date: '01.01.2025',
+      document_number: '12345',
+      delivery_type: 'электронно',
+      document_amount: '150000.00',
+      payer_inn: '7701234567',
+      payer_name: 'ООО Плательщик',
+      payer_account: '40702810938000012345',
+      payer_bank_bik: '044525225',
+      payer_corr_account: '30101810400000000225',
+      payer_bank: 'ПАО Сбербанк',
+      recipient_bank_name: 'АО Альфа-Банк',
+      recipient_bik: '044525593',
+      recipient_corr_account: '30101810200000000593',
+      recipient_account: '40702810100000054321',
+      recipient_inn: '7709876543',
+      recipient_bank: 'АО Альфа-Банк',
+      operation_type: '01',
+      payment_priority: '5',
+      payment_purpose: 'Оплата по договору №123',
+    };
+
+    // Check each value is present
+    for (const [key, value] of Object.entries(expectedValues)) {
+      expect(content).toContain(value);
+    }
+
+    // Verify NO unreplaced {placeholder} tags remain in the document
+    const unreplacedPlaceholders = content.match(/\{[a-z_]+\}/g) || [];
+    expect(unreplacedPlaceholders).toEqual([]);
+  });
+
+  it('E2E template: empty fields produce document without leftover placeholders', async () => {
+    // Create Excel with minimal data — most fields empty
+    const headers = [
+      'cardindex_id', 'client_id', 'Внебалансовый счет', 'Вид картотеки',
+      'Наименование клиента', 'Вид картотеки', 'Номер документа', 'Статус',
+      'Дата документа', 'Дата обработки документа', 'Сумма документа',
+      'Остаток платежа', 'Код валюты', 'Валюта', 'Вид операции',
+      'Назначение платежа', 'Очередность платежа', 'payerkpp',
+      'ИНН плательщика', 'Наименование плательщика', 'Кор. счет плательщика',
+      'БИК банка плательщика', 'Банк плательщика', 'Счет плательщика', 'КПП',
+      'ИНН получателя', 'Банк получателя', 'Кор счет получателя',
+      'БИК получателя', 'Наименование Банка получателя', 'Счет получателя',
+      'deliverytype', 'accountnumberdt', 'accountnumberkt',
+      'doccardindexeksid', 'sourcefactory', 'textreturn', 'load_date',
+    ];
+    const emptyRow = [
+      '2', 'C002', '', '', '', '', '99999', '',
+      '', '', '', '', '', '', '',
+      '', '', '', '', '', '', '', '',
+      '', '', '', '', '', '', '',
+      '', '', '', '', '', '', '', '',
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, emptyRow]);
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    const sparseBuffer = Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+
+    const uploadRes = await request(app.getHttpServer())
+      .post('/api/upload')
+      .attach('file', sparseBuffer, 'sparse.xlsx')
+      .expect(201);
+
+    const rowsRes = await request(app.getHttpServer())
+      .get(`/api/files/${uploadRes.body.id}/rows`)
+      .expect(200);
+
+    const wordRes = await request(app.getHttpServer())
+      .get(`/api/rows/${rowsRes.body[0].id}/word`)
+      .responseType('blob')
+      .expect(200);
+
+    const docxBuffer = Buffer.from(wordRes.body);
+    const content = extractDocxText(docxBuffer);
+
+    // Even with empty data, no placeholders should remain
+    const unreplaced = content.match(/\{[a-z_]+\}/g) || [];
+    expect(unreplaced).toEqual([]);
+
+    // Document number should still be present
+    expect(content).toContain('99999');
+  });
 });
