@@ -1,33 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ExcelRow } from '../entities/excel-row.entity';
 import * as fs from 'fs';
-import * as path from 'path';
 import PizZip = require('pizzip');
 import Docxtemplater = require('docxtemplater');
-
-/**
- * Template placeholders mapping:
- * {document_date}         — (1) Дата документа
- * {document_number}       — (2) Номер документа
- * {delivery_type}         — (3) Вид платежа
- * {document_amount}       — (4) Сумма документа
- * {document_amount_words} — (4) Сумма прописью
- * {payer_inn}             — (5) ИНН плательщика
- * {payer_name}            — (6) Наименование плательщика
- * {payer_account}         — (7) Счет плательщика
- * {payer_bank_bik}        — (8) БИК банка плательщика
- * {payer_corr_account}    — (9) Кор. счет плательщика
- * {payer_bank}            — (10) Банк плательщика
- * {recipient_bank_name}   — (11) Наименование Банка получателя
- * {recipient_bik}         — (12) БИК получателя
- * {recipient_corr_account}— (13) Кор счет получателя
- * {recipient_account}     — (14) Счет получателя
- * {recipient_inn}         — (15) ИНН получателя
- * {recipient_bank}        — (16) Банк получателя
- * {operation_type}        — (17) Вид операции
- * {payment_priority}      — (18) Очередность платежа
- * {payment_purpose}       — (19) Назначение платежа
- */
 
 function buildTemplateData(row: ExcelRow): Record<string, string> {
   return {
@@ -56,15 +31,7 @@ function buildTemplateData(row: ExcelRow): Record<string, string> {
 
 @Injectable()
 export class WordService {
-  private templatePath: string;
-
-  constructor() {
-    this.templatePath = path.join(
-      process.cwd(),
-      'templates',
-      'payment_template.docx',
-    );
-  }
+  private readonly templatePath = 'templates/payment_template.docx';
 
   async generatePaymentRequirement(row: ExcelRow): Promise<Buffer> {
     const templateContent = fs.readFileSync(this.templatePath, 'binary');
