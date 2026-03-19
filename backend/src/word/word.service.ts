@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ExcelRow } from '../entities/excel-row.entity';
 import * as fs from 'fs';
-import PizZip = require('pizzip');
-import Docxtemplater = require('docxtemplater');
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
 
 function buildTemplateData(row: ExcelRow): Record<string, string> {
   return {
