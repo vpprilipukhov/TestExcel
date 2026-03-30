@@ -11,10 +11,14 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  sql:
+    init:
+      mode: always
 
 jimmer:
+  language: kotlin
   dialect: org.babyfish.jimmer.sql.dialect.H2Dialect
   show-sql: true
   pretty-sql: true
   database-validation:
-    mode: CREATE
+    mode: NONE

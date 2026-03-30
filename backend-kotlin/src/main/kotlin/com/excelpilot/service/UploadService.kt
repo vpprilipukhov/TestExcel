@@ -7,6 +7,7 @@ import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.babyfish.jimmer.kt.new
+import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.kt.ast.expression.asc
 import org.babyfish.jimmer.sql.kt.ast.expression.desc
 import org.babyfish.jimmer.sql.kt.ast.expression.eq
@@ -57,7 +58,7 @@ class UploadService(
         val dataRows = allRows.drop(dataStartIndex).filter { row -> row.any { it.isNotEmpty() } }
 
         // Save file upload record
-        val savedFile = fileUploadRepo.save(new(FileUpload::class).by {
+        val savedFile = fileUploadRepo.insert(new(FileUpload::class).by {
             this.originalName = originalName
             this.rowCount = dataRows.size
             this.uploadedBy = "user"
@@ -67,7 +68,7 @@ class UploadService(
         // Save excel rows
         for (row in dataRows) {
             val values = buildColumnMap(row)
-            excelRowRepo.save(new(ExcelRow::class).by {
+            excelRowRepo.insert(new(ExcelRow::class).by {
                 fileUpload = new(FileUpload::class).by { id = savedFile.id }
                 cardindexId = values["cardindexId"]
                 clientId = values["clientId"]
