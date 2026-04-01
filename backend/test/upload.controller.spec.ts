@@ -226,25 +226,25 @@ describe('UploadController (e2e)', () => {
 
     // Verify every expected value from Excel is present in the generated Word
     const expectedValues: Record<string, string> = {
-      document_date: '01.01.2025',
-      document_number: '12345',
-      delivery_type: 'электронно',
-      document_amount: '150000.00',
-      payer_inn: '7701234567',
-      payer_name: 'ООО Плательщик',
-      payer_account: '40702810938000012345',
-      payer_bank_bik: '044525225',
-      payer_corr_account: '30101810400000000225',
-      payer_bank: 'ПАО Сбербанк',
-      recipient_bank_name: 'АО Альфа-Банк',
-      recipient_bik: '044525593',
-      recipient_corr_account: '30101810200000000593',
-      recipient_account: '40702810100000054321',
-      recipient_inn: '7709876543',
-      recipient_bank: 'АО Альфа-Банк',
-      operation_type: '01',
-      payment_priority: '5',
-      payment_purpose: 'Оплата по договору №123',
+      '1': '01.01.2025',
+      '2': '12345',
+      '3': 'электронно',
+      '4': '150000.00',
+      '5': '7701234567',
+      '6': 'ООО Плательщик',
+      '7': '40702810938000012345',
+      '8': '044525225',
+      '9': '30101810400000000225',
+      '10': 'ПАО Сбербанк',
+      '11': 'АО Альфа-Банк',
+      '12': '044525593',
+      '13': '30101810200000000593',
+      '14': '40702810100000054321',
+      '15': '7709876543',
+      '16': 'АО Альфа-Банк',
+      '17': '01',
+      '18': '5',
+      '19': 'Оплата по договору №123',
     };
 
     // Check each value is present
@@ -253,7 +253,7 @@ describe('UploadController (e2e)', () => {
     }
 
     // Verify NO unreplaced {placeholder} tags remain in the document
-    const unreplacedPlaceholders = content.match(/\{[a-z_]+\}/g) || [];
+    const unreplacedPlaceholders = content.match(/\{[0-9_]+\}/g) || [];
     expect(unreplacedPlaceholders).toEqual([]);
   });
 
@@ -302,7 +302,7 @@ describe('UploadController (e2e)', () => {
     const content = extractDocxText(docxBuffer);
 
     // Even with empty data, no placeholders should remain
-    const unreplaced = content.match(/\{[a-z_]+\}/g) || [];
+    const unreplaced = content.match(/\{[0-9_]+\}/g) || [];
     expect(unreplaced).toEqual([]);
 
     // Document number should still be present
